@@ -1,0 +1,68 @@
+<?php
+/**
+ * 接口1:获取订单(分页)
+ */
+$page = $_GET['page'];        // 页数
+$limit = $_GET['limit'];      // 每页条数
+$conn = new mysqli('localhost', 'root', 'password', 'database_name');
+$sql = "SELECT * FROM tb_order LIMIT {$page * $limit}, {$limit}";
+$result = $conn->query($sql);
+$list = [];     // 订单列表
+while ($row = $result->fetch_assoc()) {
+    $list[] = [
+        'id' => $row['id'],
+        'time' => $row['time'],
+        'userId' => $row['user_id'],
+        'address' => $row['shipping_address'],
+        'status' => $row['status'],
+        'trackingNumber' => $row['tracking_number']
+    ];
+}
+$total = $conn->query("SELECT COUNT(*) as total FROM tb_order")->fetch_assoc()['total'];
+echo json_encode([
+    'list' => $list,
+    'total' => $total
+]);
+/** 
+ * 接口2:更新订单 
+ */
+$id = $_POST['id'];
+$time = $_POST['time']; 
+// ...
+$sql = "UPDATE tb_order SET time = '{$time}' WHERE id = {$id}";
+$conn->query($sql);
+echo "Success";
+/**
+ * 查看订单详情
+ */
+$orderId = $_GET['orderId'];
+$sql = "SELECT * FROM tb_order WHERE id = {$orderId}";
+$result = $conn->query($sql);
+$order = $result->fetch_assoc();
+echo json_encode($order);
+/**
+ * 修改订单(从前端获取订单信息并更新)
+ */
+$order = json_decode($_POST['order'], true);
+$id = $order['id'];
+$time = $order['time'];
+// ...
+$sql = "UPDATE tb_order SET time = '{$time}' WHERE id = {$id}";
+$conn->query($sql);
+echo "Update Success"; 
+/**
+ * 接口3:获取某用户订单历史(分页)
+ */
+$customerId = $_GET['customerId']; 
+$page = $_GET['page'];      
+$limit = $_GET['limit'];    
+$sql = "SELECT * FROM tb_order WHERE user_id = {$customerId} LIMIT {$page * $limit}, {$limit}";
+$result = $conn->query($sql);
+// ...
+$customer = $conn->query("SELECT * FROM tb_customer_info WHERE id = {$customerId}")->fetch_assoc();
+echo json_encode([
+    'customer' => $customer,
+    'list' => $list, 
+    'total' => $total
+]);
+?>
